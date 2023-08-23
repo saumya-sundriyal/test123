@@ -1,0 +1,57 @@
+function onChange(control, oldValue, newValue, isLoading) {
+
+	if (isLoading) {
+		return;
+	}
+
+	if(newValue == ''){
+		g_form.clearValue('new_parent_department');
+	}
+
+	if (newValue != '') {
+
+		var fields = ['name,company,u_department,description,email,manager,type'];
+		var gaAjaxGrpUtil = new GlideAjax('c_AJAXCatalogItemVariableUtils');
+		gaAjaxGrpUtil.addParam('sysparm_name', 'getRecordInfo');
+		gaAjaxGrpUtil.addParam('sysparm_table', 'sys_user_group');
+		gaAjaxGrpUtil.addParam('sysparm_sys_id', newValue);
+		gaAjaxGrpUtil.addParam('sysparm_fields', fields.join(','));
+		gaAjaxGrpUtil.getXMLAnswer(ajaxResponse);
+
+	}
+
+	function ajaxResponse(res) {
+		var data = JSON.parse(res);
+
+		var details =  getMessage('Name') + ': ' + data.name.displayValue + '\n' + getMessage('Company') + ': ' + data.company.displayValue + '\n' + 'Department: ' + data.u_department.displayValue + '\n' + 'Parent department:' +  '\n' + getMessage('Email') + ': ' +  data.email.displayValue + '\n' + 'Manager: '+ data.manager.displayValue  + '\n' + 'Type: ' +  data.type.displayValue + '\n' + getMessage('Description') + ': ' + data.description.displayValue ;
+
+		if(data.u_department.value== null){
+			g_form.setValue('selected_group_details', details);
+		}else{
+			alert('details first '+details);
+			var fields1 = ['parent'];
+			var gaDeptParent = new GlideAjax('c_AJAXCatalogItemVariableUtils');
+			gaDeptParent.addParam('sysparm_name', 'getRecordInfo');
+			gaDeptParent.addParam('sysparm_table', 'cmn_department');
+			gaDeptParent.addParam('sysparm_sys_id', data.u_department.value);
+			gaDeptParent.addParam('sysparm_fields', fields1.join(','));
+			gaDeptParent.getXMLAnswer(ajaxResponse1, null, details);
+		}
+	}
+
+	function ajaxResponse1(result, details) {
+		alert('result '+result);
+		var data1 = JSON.parse(result);
+		alert('data1.parent.displayValue '+data1.parent.displayValue);
+		alert('details '+details);
+		var details1 = details.split('Parent department:');
+		alert('details1 '+details1);
+
+		//var details1 = testing.replace('Dept',data1.parent.displayValue);
+
+		var parentDept = 'Parent department: '+ data1.parent.displayValue;
+		var grp_detail = details1[0] + parentDept + details1[1];
+
+		g_form.setValue('selected_group_details', grp_detail);
+	}
+}
